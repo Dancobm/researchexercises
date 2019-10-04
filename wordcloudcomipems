@@ -49,19 +49,19 @@ create_token(app = "comipems2019",
              "clave_del_token")
 
 ##Generamos la búsqueda, especificamos los términos, fijamos el número de tweets a 2500, y el idioma español
-comipems2019_datos1 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+comipems2019_datos1 <- search_tweets(q="#Comipems2019", "#comipems", "comipems", n=2500, lang="es")
 
 ##Guardamos tabla en formato csv para facilitar el pegado posterior
 write.csv(comipems2019_datos1, "P:/ruta/de_la/carpeta/nombre_del_archivo1.csv")
 
 ##Repetimos código para generar una segunda tabla
-comipems2019_datos2 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+comipems2019_datos2 <- search_tweets(q="#Comipems2019", "#comipems", "comipems", n=2500, lang="es")
 
 ##Guardamos tabla en formato csv para facilitar el pegado posterior
 write.csv(comipems2019_datos2, "P:/ruta/de_la/carpeta/nombre_del_archivo2.csv")
 
 ##Repetimos código para generar una tercera tabla
-comipems2019_datos3 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+comipems2019_datos3 <- search_tweets(q="#Comipems2019", "#comipems", "comipems", n=2500, lang="es")
 
 ##Guardamos tabla en formato csv para facilitar el pegado posterior
 write.csv(comipems2019_datos3, "P:/ruta/de_la/carpeta/nombre_del_archivo3.csv")
