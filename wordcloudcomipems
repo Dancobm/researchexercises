@@ -1,2 +1,157 @@
-##Creación de nube de palabras con TwitteR
-##Búsqueda de términos relacionados con el examen Comipems 2019
+##R Script
+##Creación de nube de palabras con TwitteR y Tidy.
+##Búsqueda de términos relacionados con los resultados del examen Comipems 2019
+##Fuentes: Las consultas fueron diversas. Esencialmente de los blogs de los siguientes sitios:
+##https://rstudio-pubs-static.s3.amazonaws.com/
+##https://jvera.rbind.io
+##https://www.datanovia.com
+##https://www.r-bloggers.com
+##Sitios varios de documentación de R
+
+##Elaboró Daniel Omar Cobos Marín.
+##Estudiante de Doctorado en Ciencia Social con Especialidad en Sociología. COLMEX.
+##dcobos@colmex.mx
+##twitter: @dancobm
+##fb: daniel cobos
+
+##Instalamos paquetes 
+# install.packages("rtweet")
+# install.packages("tidytext")
+# install.packages("dplyr")
+# install.packages("stringr")
+# install.packages("githubinstall")
+# library(githubinstall)
+# gh_install_packages("lchiffon/wordcloud2")
+# install.packages("quanteda")
+# install.packages("tm")
+
+##Cargamos librerías necesarias
+
+require(devtools)
+library(tidytext)
+library(dplyr)
+library(stringr)
+library(rtweet)
+library(wordcloud2)
+library(readr)
+library(tm)
+library(ggplot2)
+
+##---------------Primer paso: Obtención de tweets---------------
+
+##Creamos token de acceso. Nombre y llaves de la aplicación. (Método de autenticación directa)
+##Estos datos los obtenemos de https://developer.twitter.com/
+
+create_token(app = "comipems2019", 
+             "llave_de_la_aplicación",
+             "clave_de_la_aplicación",
+             "llave_del_token",
+             "clave_del_token")
+
+##Generamos la búsqueda, especificamos los términos, fijamos el número de tweets a 2500, y el idioma español
+comipems2019_datos1 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+
+##Guardamos tabla en formato csv para facilitar el pegado posterior
+write.csv(comipems2019_datos1, "P:/ruta/de_la/carpeta/nombre_del_archivo1.csv")
+
+##Repetimos código para generar una segunda tabla
+comipems2019_datos2 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+
+##Guardamos tabla en formato csv para facilitar el pegado posterior
+write.csv(comipems2019_datos2, "P:/ruta/de_la/carpeta/nombre_del_archivo2.csv")
+
+##Repetimos código para generar una tercera tabla
+comipems2019_datos3 <- search_tweets(q="#Comipems2019", "comipems", "Erick Fabián Jesús Hernández", n=2500, lang="es")
+
+##Guardamos tabla en formato csv para facilitar el pegado posterior
+write.csv(comipems2019_datos3, "P:/ruta/de_la/carpeta/nombre_del_archivo3.csv")
+
+##---------------Segundo paso: Generar base de datos definitiva--------------
+
+##Fijamos directorio de trabajo y listamos los archivos
+setwd("P:/mi/ruta/")
+midirectorio = "Comipems Twitter"
+misarchivos = list.files(path=midirectorio, pattern="comipemstwitter*.csv", full.names=TRUE)
+
+##Visualizamos que se han juntado los archivos
+misarchivos
+
+##Cargamos los archivos y guardamos la nueva base
+dat_csv = ldply(misarchivos, read_csv)
+comipems_base_completa <- read.csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
+readr::read_csv("P:/Doctorado/Administrativo/Comipems Twitter/comipemstwitter base completa.csv")
+
+##Identificamos y eliminamos filas repetidas a partir de cuatro variables, conservando las demás
+comipems_base_completa %>% distinct(user_id,
+                                    status_id,
+                                    created_at,
+                                    screen_name, 
+                                    text, .keep_all = TRUE)
+                                    
+##Guardamos los cambios
+write.csv(comipems2019_datos3, "P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
+
+##---------------Tercer paso: transformamos nuestra base de tweets--------------
+
+##Visualizamos nuestra base de tweets. (N=6203).
+##En este punto es importante mencionar que la codificación del idioma es muy importante
+##pues de eso vale que funcionen los comandos de tidy. Cuando cambian los caracteres, las columnas
+##o variables son interpretadas como si fuesen valores numéricos, no hace falta transformar las
+##columnas, simplemente especificar la codificación local al cargar el archivo para que se lea
+##como caracteres.
+comtabla <- read_csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv", 
+                    locale = locale(encoding = "ISO-8859-1"))
+View(comtabla)
+
+##Revisar base de trabajo, sobre todo las variables de texto con las que se trabajará
+head(comtabla)
+dim(comtabla)
+comtabla$text
+
+##Desanidamos las palabras en "tokens" por renglón
+comtabla <- comtabla %>%
+unnest_tokens(word, text)
+
+##Removemos palabras vacías o "stop words", la versión por defecto sólo integra palabras en inglés.
+##Corregimos para español con el paquete tm.
+data(stop_words)
+custom_stop_words <- bind_rows(stop_words, data_frame(word=tm::stopwords("es"), lexicon = "ESP"))
+comtabla <- comtabla %>%
+anti_join(custom_stop_words)
+
+##Conteo y organización de palabras. Visualizamos.
+comtabla <- comtabla %>%
+count(word, sort = TRUE)
+View(comtabla)
+
+##Filtramos otras palabras sin sentido, las que no se pudieron eliminar, y las que no son de interés
+comtabla <- comtabla %>%
+filter(!word %in% c('t.co', 'https', 'RT', "ed", 'los',  'las', 'de',  'si',  'se',   'con', 'realiz',  'una',  'pensé', 'chody', 'eres',
+                      'todos',  'ya',  'pero',  'por',  'lo',  'este',  'era',  'al', 'mi',   'mis', 'te',  'voy',  'una',  'dos',  'yo',
+                      'la', 'el', 'en', 'rt',  'del',  'es',  'emoctezumab',  'más',  'qué',  'que', 'adriandaniel75',  'llegó', 'sus', 
+                      'je', 'ep', 'amp', '00bd',  '00bc', '00b1', 'fe0f',  '00be',  'ooqfupdyjn', '00b8', '00b9',  '00a0', 'su', 'para', 'fue',
+                      'sep_mx', 'resultados', 'examen', 'zanda4sdzg', 'el_universal_mx', 'hectorastudillo', 'comipems'
+                    ))
+
+##Visualizamos nuevamente la tabla definitiva. (N=5369)
+View(comtabla)
+
+##---------------Cuarto paso, generar la nube de palabras---------------------------------
+
+##Generamos la nube de palabras, ajustamos color y propiedades.
+wordcloud2(comtabla, size=.25, color='white', backgroundColor = "black", 
+           shape = 'circle', ellipticity = 1, minRotation = -pi/3, maxRotation = pi/3)
+
+##Tabulación de las primeras 20 palabras más frecuentes.
+##La palabra 'comipems' fue por mucho la más utilizada, se excluyó de la tabulación y de la nube
+comtabla [1:20, ]
+
+##Gráfico de frecuencias para las primeras 20 palabras
+comtabla[1:20, ] %>%
+  ggplot(aes(word, n), value) +
+  geom_bar(stat = "identity", color = "white", fill = "grey") +
+  geom_text(aes(hjust = 1, label = n)) + 
+  coord_flip() + 
+  labs(title = "Las veinte palabras más frecuentes",  x = "Palabras", y = "Frecuencia")
+  
+##----------------Fin del script-----------------------##
