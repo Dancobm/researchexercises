@@ -76,10 +76,10 @@ misarchivos = list.files(path=midirectorio, pattern="comipemstwitter*.csv", full
 ##Visualizamos que se han juntado los archivos
 misarchivos
 
-##Cargamos los archivos y guardamos la nueva base
+##Cargamos los archivos
 dat_csv = ldply(misarchivos, read_csv)
 comipems_base_completa <- read.csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
-readr::read_csv("P:/Doctorado/Administrativo/Comipems Twitter/comipemstwitter base completa.csv")
+readr::read_csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
 
 ##Identificamos y eliminamos filas repetidas a partir de cuatro variables, conservando las demás
 comipems_base_completa %>% distinct(user_id,
