@@ -76,6 +76,9 @@ misarchivos = list.files(path=midirectorio, pattern="comipemstwitter*.csv", full
 ##Visualizamos que se han juntado los archivos
 misarchivos
 
+##Guardamos
+write.csv(misarchivos, "P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
+
 ##Cargamos los archivos
 dat_csv = ldply(misarchivos, read_csv)
 comipems_base_completa <- read.csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
@@ -89,7 +92,7 @@ comipems_base_completa %>% distinct(user_id,
                                     text, .keep_all = TRUE)
                                     
 ##Guardamos los cambios
-write.csv(comipems2019_datos3, "P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
+write.csv(comipems_base_completa, "P:/ruta/de_la/carpeta/comipemstwitter base completa.csv")
 
 ##---------------Tercer paso: transformamos nuestra base de tweets--------------
 
