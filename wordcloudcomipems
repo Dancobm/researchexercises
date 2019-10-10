@@ -1,5 +1,5 @@
 ##R Script
-##Creación de nube de palabras con TwitteR y Tidy.
+##Creación de nube y asociación de palabras con TwitteR y Tidy.
 ##Búsqueda de términos relacionados con los resultados del examen Comipems 2019
 ##Fuentes: Las consultas fueron diversas. Esencialmente de los blogs de los siguientes sitios:
 ##https://rstudio-pubs-static.s3.amazonaws.com/
@@ -133,7 +133,7 @@ filter(!word %in% c('t.co', 'https', 'RT', "ed", 'los',  'las', 'de',  'si',  's
                       'todos',  'ya',  'pero',  'por',  'lo',  'este',  'era',  'al', 'mi',   'mis', 'te',  'voy',  'una',  'dos',  'yo',
                       'la', 'el', 'en', 'rt',  'del',  'es',  'emoctezumab',  'más',  'qué',  'que', 'adriandaniel75',  'llegó', 'sus', 
                       'je', 'ep', 'amp', '00bd',  '00bc', '00b1', 'fe0f',  '00be',  'ooqfupdyjn', '00b8', '00b9',  '00a0', 'su', 'para', 'fue',
-                      'sep_mx', 'resultados', 'examen', 'zanda4sdzg', 'el_universal_mx', 'hectorastudillo', 'comipems'
+                      'sep_mx', 'resultados', 'examen', 'zanda4sdzg', 'el_universal_mx', 'hectorastudillo'
                     ))
 
 ##Visualizamos nuevamente la tabla definitiva. (N=5369)
@@ -156,5 +156,58 @@ comtabla[1:20, ] %>%
   geom_text(aes(hjust = 1, label = n)) + 
   coord_flip() + 
   labs(title = "Las veinte palabras más frecuentes",  x = "Palabras", y = "Frecuencia")
+  
+##----------------Quinto paso: Asociación entre palabras---------------------------------
+
+##Llamamos a nuestra base de tweets orginal.
+comtabla <- read_csv("P:/ruta/de_la/carpeta/comipemstwitter base completa.csv", 
+                     locale = locale(encoding = "ISO-8859-1"))
+
+##Desanidamos nuevamente pero creamos pares de palabras o bigramas, Limpiamos elementos web, espacios y signos de puntuación.
+limpiar <- function(texto){
+  nuevo_texto <- tolower(texto)
+  nuevo_texto <- str_replace_all(nuevo_texto,"http\\S*", "")
+  nuevo_texto <- str_replace_all(nuevo_texto,"[[:punct:]]", " ")
+  nuevo_texto <- str_replace_all(nuevo_texto,"[[:digit:]]", " ")
+  nuevo_texto <- str_replace_all(nuevo_texto,"[\\s]+", " ")
+  return(nuevo_texto)
+}
+
+bigramas <- comtabla %>% mutate(text = limpiar(text)) %>%
+  select(text) %>%
+  unnest_tokens(input="text", output= "bigrama",
+                token = "ngrams",n = 2, drop = TRUE)
+                
+## Frecuencia de cada bigrama
+bigramas  %>% dplyr::count(bigrama, sort = TRUE)
+
+##Separamos bigramas para eliminar stopwords o palabras vacías
+bigramas_separados <- bigramas %>% separate(bigrama, c("palabra1", "palabra2"),
+                                           sep = " ")
+head(bigramas_separados)
+
+##Eliminamos stopwords
+
+bigramas_separados <- bigramas_separados  %>%
+  filter(!palabra1 %in% stopwords(kind="es")) %>%
+  filter(!palabra2 %in% stopwords(kind="es"))
+bigramas_separados  %>% dplyr::count(palabra1,palabra2, sort = TRUE)
+
+##Unimos nuevamente
+bigramas <- bigramas_separados %>%
+  unite(bigrama, palabra1, palabra2, sep = " ")
+
+##Revisamos
+bigramas  %>% dplyr::count(bigrama, sort = TRUE) %>% print(n = 20)
+
+##Graficamos un mapa de relaciones
+  bigramas %>% dplyr::count(bigrama, sort = TRUE) %>%
+  top_n(12) %>%
+  ggplot(aes(fct_reorder(bigrama, n), n)) +
+  geom_col() +
+  coord_flip() +
+  labs(x = "Pares de relaciones", y = "Frecuencia", title = "Frecuencia de asociación de palabras en pares.",
+       subtitle = 'Datos de Twitter para el filtro "comipems"', 
+       caption = "Fuente: Elaboración propia, datos públicos de Twitter; julio, 2019.")
   
 ##----------------Fin del script-----------------------##
