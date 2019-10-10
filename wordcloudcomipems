@@ -187,7 +187,6 @@ bigramas_separados <- bigramas %>% separate(bigrama, c("palabra1", "palabra2"),
 head(bigramas_separados)
 
 ##Eliminamos stopwords
-
 bigramas_separados <- bigramas_separados  %>%
   filter(!palabra1 %in% stopwords(kind="es")) %>%
   filter(!palabra2 %in% stopwords(kind="es"))
