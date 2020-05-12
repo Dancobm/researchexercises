@@ -1,0 +1,308 @@
+/**Análisis de datos sobre la disponibilidad de infraestructura
+doméstica para el acceso a internet en tiempos del Covid-19
+Análisis específico para estudiantes.
+
+Construcción de variables disponible en Github
+Fuente de datos: Encuesta Nacional sobre Disponibilidad y Uso de Tecnologías
+				 de la Información en los Hogares
+				 https://www.inegi.org.mx/programas/dutih/2019/
+Construcción de los datos en Github, url: 
+Autor: Daniel Omar Cobos Marín
+**/
+
+**Directorio
+cd "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado"
+use basefinal_2.dta, clear
+
+**Recodificación de variables en función de las necesidades del análisis
+*Edad, discretizamos y agrupamos valores de variable
+recode edad (1/2=1)
+tab edad if asiste==1
+label define edad_re 1 "3-15 años" 3 "16-20 años" 4 "21-25 años" 5 "26-35 años" 6 "+36 años"
+label values edad edad_re 
+tab edad if asiste==1
+
+*Número de habitantes, discretizamos y formamos grupos
+rename numhab numhab_cont
+tab numhab_cont
+recode numhab_cont (1/3=1) (4/6=2) (7/9=3) (10/22=4), gen(numhab)
+tab numhab
+label variable numhab "Número de habitantes"
+label define numhab 1 "1-3 hab." 2 "4-6 hab." 3 "7-9 hab." 4 "+10 hab"
+label values numhab numhab
+order upm tloc sexo paren edad_cont edad asiste nivel ocupacion trabajo discapacidad numhab_cont numhab
+
+*Discapacidad a partir de trabajo
+replace trabajo=2 if discapacidad==1
+label define trabajo 0 "No" 1 "Si" 2 "Discapacidad" 
+label values trabajo trabajo
+label variable trabajo "Trabajo/discapacidad"
+tab trabajo if asiste==1 [fw=ponderador]
+
+**Descriptivos
+tab sexo if edad_cont<=35 & asiste==1 [fw=ponderador]
+tab nivel if edad_cont<=35 & asiste==1 [fw=ponderador]
+count
+*76,586 casos totales
+count if asiste==1
+*19,305 casos que asisten a la escuela, cualquier nivel
+
+*Discretizamos Índice Socioeconómico
+xtile isequar=ise, nq(4)
+label variable isequar "Cuartiles de ISE"
+label define isequar 1 "Bajo" 2 "Medio/bajo" 3 "Medio/alto" 4 "Alto"
+label values isequar isequar
+tab isequar if edad<=35 & asiste==1 [fw=ponderador]
+
+**Comparamos la construcción original de medida socioeconómica
+**(estrato) con el índice construido frente a la ocupación y el nivel educativo
+tab ocupacion estrato [fw=ponderador], row nof
+
+/*
+           
+                  |     Estrato socioeconomico construcción
+                  |                  original
+        Ocupación |      Bajo  Medio-baj  Medio-alt       Alto |     Total
+------------------+--------------------------------------------+----------
+familiar sin pago |     50.44      37.18       8.57       3.81 |    100.00 
+      jornalero/a |     57.34      40.83       1.65       0.18 |    100.00 
+         obrero/a |     18.31      61.76      16.31       3.61 |    100.00 
+    cuenta propia |     29.08      44.62      18.27       8.02 |    100.00 
+         empleado |     11.62      48.94      26.72      12.72 |    100.00 
+           patron |      8.17      37.06      30.26      24.50 |    100.00 
+------------------+--------------------------------------------+----------
+            Total |     21.28      46.99      21.64      10.09 |    100.00 
+
+
+*/
+
+tab ocupacion isequar [fw=ponderador], row nof
+
+/*
+                  |             4 quantiles of ise
+        Ocupación |         1          2          3          4 |     Total
+------------------+--------------------------------------------+----------
+familiar sin pago |     34.04      23.18      22.85      19.93 |    100.00 
+      jornalero/a |     52.56      28.98      14.26       4.20 |    100.00 
+         obrero/a |     23.62      29.45      30.25      16.68 |    100.00 
+    cuenta propia |     25.07      22.31      28.10      24.52 |    100.00 
+         empleado |     13.91      22.31      29.68      34.10 |    100.00 
+           patron |      5.73      13.45      23.32      57.50 |    100.00 
+------------------+--------------------------------------------+----------
+            Total |     20.59      22.93      27.80      28.68 |    100.00 
+
+*/
+
+tab nivel estrato [fw=ponderador], row nof
+
+/*
+
+                 |     Estrato socioeconomico construcción
+                 |                  original
+ Nivel educativo |      Bajo  Medio-baj  Medio-alt       Alto |     Total
+-----------------+--------------------------------------------+----------
+         ninguno |     46.02      42.17      10.04       1.77 |    100.00 
+      preescolar |     30.94      49.81      14.52       4.73 |    100.00 
+        primaria |     32.78      48.69      14.51       4.02 |    100.00 
+      secundaria |     23.15      52.90      18.11       5.84 |    100.00 
+   normal basica |      8.02      45.36      29.37      17.24 |    100.00 
+  técnico basico |      5.03      35.33      43.90      15.74 |    100.00 
+    preparatoria |     15.41      48.81      25.46      10.33 |    100.00 
+tecnico superior |      5.36      41.02      36.92      16.69 |    100.00 
+    licenciatura |      5.80      35.47      33.12      25.61 |    100.00 
+    especialidad |      1.56      20.95      33.91      43.58 |    100.00 
+        maestria |      1.38      21.07      30.37      47.18 |    100.00 
+       doctorado |      2.46      20.83      44.27      32.43 |    100.00 
+-----------------+--------------------------------------------+----------
+           Total |     22.55      46.95      20.91       9.59 |    100.00 
+*/
+
+tab nivel isequar [fw=ponderador], row nof
+
+/*
+
+
+                 |             4 quantiles of ise
+ Nivel educativo |         1          2          3          4 |     Total
+-----------------+--------------------------------------------+----------
+         ninguno |     54.68      35.27       8.08       1.97 |    100.00 
+      preescolar |     33.31      49.19      14.21       3.30 |    100.00 
+        primaria |     33.46      25.59      36.93       4.01 |    100.00 
+      secundaria |     24.03      26.37      28.86      20.74 |    100.00 
+   normal basica |      6.76      18.09      38.77      36.38 |    100.00 
+  técnico basico |      4.07      20.89      38.57      36.48 |    100.00 
+    preparatoria |     12.07      26.84      33.46      27.63 |    100.00 
+tecnico superior |      2.65      16.85      36.35      44.16 |    100.00 
+    licenciatura |      2.54       8.00      22.45      67.01 |    100.00 
+    especialidad |      0.00       8.06       4.33      87.61 |    100.00 
+        maestria |      0.71       1.90       5.99      91.41 |    100.00 
+       doctorado |      0.00       0.82       7.02      92.17 |    100.00 
+-----------------+--------------------------------------------+----------
+           Total |     22.29      23.71      29.98      24.03 |    100.00 
+
+*/
+
+**Nuestra construcción de índice socioeconómico parece más consistente
+
+/**Estimación de probabilidades bajo un modelo estadístico.
+Elegimos un modelo loglineal para controlar variables sociodemográficas
+y de disponibilidad de infraestructura. Variable dependiente es acceso a internet.
+La variable dependiente considera únicamente si el acceso se da dentro del hogar
+ya sea fijo o móvil
+**/
+
+*Modelo loglineal condicionado a la asistencia a la escuela. Definición de modelo. Coeficientes estandarizados
+*Modelo1
+quiet logit internet ib3.isecat i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
+listcoef
+estimates store modelo1
+
+*Modelo 2 
+quiet logit internet ib3.isecat i.iatcat i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
+listcoef
+estimates store modelo2
+lrtest modelo1
+a
+*Modelo 3
+logit internet ib3.isecat i.iatcat iase_a i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
+listcoef
+estimates store modelo3
+lrtest modelo1
+lrtest modelo2
+
+*Conservamos el último modelo. La introducción del índice de asequibilidad mejora la estimación
+*Ejecutamos modelo para estimación de probabilidades manteniendo niveles promedio de las variables(margins)
+logit internet ib3.isecat ib3.iatcat iase_a i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
+listcoef
+
+*Probabilidades estimadas del ISE, manteniendo todas las variables en el nivel promedio
+margins isecat, atmeans
+
+/*-----------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      isecat |
+       Bajo  |   .5488297   .0003345  1640.55   0.000      .548174    .5494854
+      Medio  |   .7713202   .0002029  3801.67   0.000     .7709226    .7717179
+       Alto  |   .8897327   .0001314  6771.52   0.000     .8894752    .8899902
+------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas del IAT, manteniendo todas las variables en el nivel promedio
+margins iatcat, atmeans
+
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      iatcat |
+       Bajo  |   .6592675   .0001924  3425.81   0.000     .6588903    .6596447
+       Alto  |   .9069046   .0001244  7288.12   0.000     .9066607    .9071485
+------------------------------------------------------------------------------*/
+
+*Probabildiades estimadas del IASE, manteniendo todas las variables en el nivel promedio
+margins, atmeans at((p10)iase_a) at((p75)iase_a) at((p90)iase_a)  at((p95)iase_a)
+
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     iasebma |
+       Bajo  |   .7698916   .0002178  3534.60   0.000     .7694647    .7703185
+      Medio  |   .7802232   .0002055  3795.88   0.000     .7798203    .7806261
+       Alto  |   .7987799   .0001913  4175.71   0.000      .798405    .7991548
+------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas del sexo, manteniendo todas las variables en el nivel promedio
+margins sexo, atmeans
+
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        sexo |
+      varon  |   .7868139   .0001707  4608.87   0.000     .7864793    .7871484
+      mujer  |   .7811852   .0001733  4507.26   0.000     .7808455    .7815249
+------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas de la edad, manteniendo todas las variables en su nivel promedio
+margins edad, atmeans
+
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        edad |
+  3-15 años  |    .753375   .0001948  3867.29   0.000     .7529932    .7537568
+ 16-20 años  |   .8090319   .0001937  4177.21   0.000     .8086523    .8094115
+ 21-25 años  |   .8222516    .000318  2585.64   0.000     .8216283    .8228748
+ 26-35 años  |   .7663894   .0005603  1367.80   0.000     .7652912    .7674876
+   +36 años  |   .8043067   .0005389  1492.40   0.000     .8032504    .8053629
+------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas del número de habitantes, manteniendo todas las variables en su nivel promedio
+margins numhab, atmeans
+
+
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      numhab |
+   1-3 hab.  |   .7484925   .0002824  2650.38   0.000      .747939     .749046
+   4-6 hab.  |   .8007123   .0001464  5467.69   0.000     .8004253    .8009994
+   7-9 hab.  |   .7323584   .0003782  1936.50   0.000     .7316172    .7330996
+    +10 hab  |   .7928131    .000778  1019.06   0.000     .7912883    .7943379
+------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas trabajo/discapacidad, manteniendo todas las variables en su nivel promedio
+margins trabajo, atmeans
+
+/*-------------------------------------------------------------------------------
+              |            Delta-method
+              |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+      trabajo |
+          No  |   .7252887   .0006269  1157.01   0.000     .7240601    .7265174
+          Si  |   .7840535   .0001327  5906.43   0.000     .7837934    .7843137
+Discapacidad  |   .7840535   .0001327  5906.43   0.000     .7837934    .7843137
+-------------------------------------------------------------------------------*/
+
+*Probabilidades estimadas de tamaño de localidad, manteniendo todas las variables en su nivel promedio
+margins tloc, atmeans
+
+
+
+
+
+a
+
+logit internet ib3.isecat ib3.iatcat iase_a i.sexo i.edad i.numhab i0.trabajo i.tloc [fw=ponderador], or
+margins, atmeans at((p10)iase_a) at((p75)iase_a) at((p90)iase_a)  at((p95)iase_a)
+
+
+
+
+logit internet ib3.isecat ib3.iatcat ib2.iase_ba i.sexo edad_cont i.numhab i0.trabajo i.tloc  [fw=ponderador], or
+margins, atmeans at(edad_cont=(6 12 15 18 21 25 35 40 45 50 60 70 80))
+
+/*Con otro índice de asequibilidad*/
+
+logit internet ib3.isecat i.iatcat inter i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
+
+
+
+
+
+* atmeans at((p10)ise) at((p25)ise) at((p50)ise) at((p75)ise) at((p90)ise)
+margins isequar, atmeans
+*Probabilidades estimadas del índice de acceso dóméstico tecnológico, promedio a diferentes niveles
+margins, atmeans at((p50)iat) at((p75)iat) at((p90)iat)
+margins, atmeans at((p10)iat) at((p75)iat) at((p90)iat)
+*Probabilidades estimadas del número de habitantes en niveles extremos promedio (NO es medida de hacinamiento)
+margins, atmeans at((p10)numhab) at ((p90)numhab)
+*Probabilidades estimadas manteniendo las variables en su nivel promedio
+margins ocupacion, atmeans
+margins tloc, atmeans
+margins sexo, atmeans
+
