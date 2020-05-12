@@ -1,0 +1,645 @@
+/**Ejercicio desigualdad en el acceso a la tecnología para clases en línea. COVID-19
+**Daniel Cobos
+
+**Directorios
+tempfile a
+**Bases creadas
+local datos "C:\Users\peacy\Desktop\endithu\Base de datos\creado"
+local temporal "C:\Users\peacy\Desktop\endithu\Base de datos\temporal"
+**ENDITUH
+cd "C:\Users\peacy\Desktop\endithu\Base de datos\"
+clear
+gen upm=.
+save `a', replace
+
+****Viviendas
+**Llamamos base de viviendas para hacer índice socioeconómico
+use upm viv_sel p1_1 p1_2 p1_3 p1_4 p1_5_1 p1_5_2 p1_5_3 p2_1 p2_2 p2_3 estrato tloc using tic_2019_viviendas.dta, clear
+quiet destring, replace
+
+**Pegamos temporalmente
+sort upm viv_sel
+append using `a'
+
+**Transformamos variables para construir índice socioeconómico
+***Servicios
+**Material del piso.
+recode p1_1 (1=0) (2 3=1)
+rename p1_1 piso
+**Disponibilidad de agua
+recode p1_2 (1 2=1) (3/6=0)
+rename p1_2 agua
+**Servicio de drenaje
+recode p1_3 (1=1) (2/5=0)
+rename p1_3 drenaje
+**Servicio de luz
+recode p1_4 (1=1)(*=0)
+rename p1_4 luz
+
+***Activos del hogar
+**Refrigerador
+recode p1_5_1 (1=1)(*=0)
+rename p1_5_1 refri
+**Lavadora
+recode p1_5_2 (1=1)(*=0)
+rename p1_5_2 lavadora
+**Automóvil
+recode p1_5_3 (1=1)(*=0)
+rename p1_5_3 auto
+
+**Habitantes
+rename p2_1 numhab
+**Proveedor(es) de hogar
+gen prov_hogar=.
+replace prov_hogar=1 if p2_2==1
+replace prov_hogar=2 if p2_3>=2
+
+**Seleccionamos variables creadas y guardamos
+keep upm viv_sel piso agua drenaje luz refri lavadora auto numhab tloc estrato
+sort upm viv_sel
+save "`datos'/base_viv.dta", replace
+
+****Hogares
+clear
+gen upm=.
+save `a', replace
+**Llamamos a base de hogares
+use upm viv_sel p4_1* p4_2* p4_3* p4_4 p4_5 p4_6* p4_7* p4_8* p5* tloc estrato ///
+using tic_2019_hogares.dta, clear
+quiet destring, replace
+append using `a'
+save `a', replace
+
+**Recodificación de activos del hogar (interfaces de acceso a la información e internet)
+**Radio
+recode p4_1_1 (1=1)(*=0)
+rename p4_1_1 radio
+
+**Televisión análoga, digital y plana
+gen tv=.
+recode p4_1_2 (1=1)(*=0)
+recode p4_1_3 (1=1)(*=0)
+recode p4_1_4 (1=1)(*=0)
+replace tv=1 if p4_1_2==1 & p4_1_3==1 & p4_1_4==1
+replace tv=0 if tv==.
+
+**Teléfono celular de algún miembro del hogar
+recode p4_1_5 (1=1)(*=0)
+rename p4_1_5 celular
+
+**Consola de videojuegos
+recode p4_1_6 (1=1)(*=0)
+rename p4_1_6 videojuego
+
+**Computadora fija/portátil
+gen compu=.
+replace compu=1 if p4_2_1==1
+replace compu=1 if p4_2_2==1
+replace compu=0 if p4_2_1==2
+replace compu=0 if p4_2_2==2
+
+**Tableta
+recode p4_2_3 (1=1)(*=0)
+rename p4_2_3 tableta
+
+***Infraestructura doméstica de acceso a internet
+**Internet
+gen internet=.
+replace internet=1 if p4_4==1
+replace internet=1 if p4_6_1==1 & p4_4==1
+replace internet=1 if p4_6_2==1 & p4_4==1
+replace internet=1 if p4_6_3==1 & p4_4==1
+replace internet=1 if p4_6_4==1 & p4_4==1
+replace internet=1 if p4_6_5==1 & p4_4==1
+replace internet=1 if p4_6_6==1 & p4_4==1
+replace internet=0 if internet==.
+
+***Dispositivo de conexión móvil
+**Celular
+recode p4_7_1 (1=1)(*=0)
+rename p4_7_1 con_celular
+
+**Módem móvil
+recode p4_7_2 (1=1)(*=0)
+rename p4_7_2 con_modem
+
+**Tableta
+recode p4_7_3 (1=1)(*=0)
+rename p4_7_3 con_tableta
+
+**Seleccionamos variables y guardamos
+keep upm viv_sel radio tv celular videojuego compu tableta internet con_celular con_modem con_tableta tloc
+save "`datos'/base_hog.dta", replace
+sort upm viv_sel
+save `a', replace
+use "`datos'/base_viv.dta", replace
+sort upm viv_sel
+merge upm viv_sel using `a'
+tab _merge
+drop _merge
+sort upm viv_sel
+save "`temporal'/basefinal.dta", replace
+
+****Residentes
+clear
+gen upm=.
+save `a', replace
+**Llamamos a base de residentes
+use upm viv_sel paren sexo edad p3_7 nivel grado p3_10 p3_11 p3_12 tloc estrato ///
+using tic_2019_residentes.dta, clear
+quiet destring, replace
+sort upm viv_sel
+append using `a'
+save `a', replace
+
+***Codificamos variables sociodemográficas
+**Parentesco con jefe de hogar
+label define paren 1 "jefe/a" 2 "esposo/a" 3 "hijo/a" 4 "nieto/a" 5 "otro" 6 "no parentesco"
+label values paren paren
+
+**Sexo
+label define sexo 1 "varon" 2 "mujer"
+label values sexo sexo
+
+**Asiste a la escuela
+recode p3_7 (2=0)
+rename p3_7 asiste
+
+**Grado
+recode nivel (99=0)
+label define nivel 0 "ninguno" 1 "preescolar" 2 "primaria" 3 "secundaria" 4 "normal basica" ///
+				   5 "técnico basico" 6 "preparatoria" 7 "tecnico superior" 8 "licenciatura" ///
+				   9 "especialidad" 10 "maestria" 11 "doctorado" 
+label values nivel nivel
+
+**Trabajo
+gen trabajo=.
+replace trabajo=1 if p3_10>=1 & p3_10 <=6
+replace trabajo=0 if p3_10==8
+
+**Discapacidad
+gen discapacidad=.
+replace discapacidad=1 if p3_10==7
+replace discapacidad=0 if p3_10!=7
+
+**Corregimos trabajo
+replace trabajo=1 if p3_11==1
+replace trabajo=1 if p3_11==2
+replace trabajo=1 if p3_11==3
+
+**Ocupación
+
+gen ocupacion=.
+replace ocupacion=1 if p3_12==6
+replace ocupacion=2 if p3_12==3
+replace ocupacion=3 if p3_12==2
+replace ocupacion=4 if p3_12==4
+replace ocupacion=5 if p3_12==1
+replace ocupacion=6 if p3_12==5 
+label define ocupacion 1 "familiar sin pago" 2 "jornalero/a" 3 "obrero/a" 4 "cuenta propia" 5 "empleado" 6 "patron"  
+label values ocupacion ocupacion
+
+**Guardamos y pegamos en base temporal
+keep upm viv_sel paren sexo edad asiste nivel trabajo discapacidad ocupacion estrato tloc
+save "`datos'/base_resi.dta", replace
+sort upm viv_sel
+save `a', replace
+use "`temporal'/basefinal.dta", replace
+sort upm viv_sel
+merge upm viv_sel using `a'
+tab _merge
+drop _merge
+order upm sexo paren edad asiste nivel ocupacion trabajo discapacidad numhab ///
+      piso agua drenaje luz refri lavadora auto radio tv compu internet /// 
+	  celular videojuego tableta con_celular con_modem con_tableta estrato  
+save "`temporal'/basefinal_1.dta", replace
+
+****Generamos índices
+**Socioeconómico
+polychoricpca piso agua drenaje luz refri lavadora auto radio tv nivel, score(factor) nscore(2) 
+gen ise=(factor1*0.4088)+(factor2*0.1171)
+drop factor*
+summ ise, detail
+**Deciles
+xtile isedec=ise, nq(10)
+**Quintiles
+xtile isequin=ise, nq(5)
+**Alto, medio y bajo
+xtile isecat=ise, nq(3)
+**Alto-bajo
+xtile iseba=ise, nq(2)
+
+**Guardamos
+save "`temporal'/basefinal_1.dta", replace
+
+** Ìndice de Acceso Doméstico a Tecnología Digital de la Información (interfaces de conexión). 
+**A mayor puntaje, mayor infraestructura doméstica (interfaces de conexión)
+factor compu celular videojuego tableta
+predict f1 
+gen iat=f1
+summ iat, detail
+**Deciles
+xtile iatq=iat, nq(4)
+**Quintiles
+xtile iatquin=iat, nq(5)
+*Alto, medio, bajo
+xtile iatcat=iat, nq(3)
+*Alto-bajo
+xtile iatab=iat, nq(2)
+
+**Guardamos base
+keep  upm sexo paren edad asiste nivel ocupacion trabajo discapacidad numhab ///
+      piso agua drenaje luz refri lavadora auto radio tv compu internet celular ///
+	  videojuego tableta con_celular con_modem con_tableta estrato viv_sel tloc ///
+	  ise isedec isequin isecat iat iatq iatquin iatcat iseba iatab
+save "`datos'/basefinal_2.dta", replace
+
+**Pegamos ponderador
+use tic_2019_hogares.dta, clear
+quiet destring, replace
+keep upm viv_sel fac_hog
+sort upm
+save `a', replace
+use "`datos'/basefinal_2.dta", replace
+sort upm
+merge upm using `a'
+tab _merge
+drop _merge
+
+**Guardamos base final
+save "`datos'/basefinal_2.dta", replace
+
+*/
+***
+/*
+**Adiciones para construir índice de calidad, y de asequibilidad. Recuperamos algunas variables
+tempfile a
+**Tipo de conexión fija o móvil de internet y costo 
+use "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\tic_2019_hogares.dta", clear
+quiet destring, replace
+keep upm p4_5 p4_7_4 p4_8 p5_1 p5_4 p5_5 p5_8_1 p5_9_1 p5_8_2 p5_9_2 p5_8_3 p5_9_3 p5_8_4 ///
+p5_9_4 p5_8_5 p5_9_5 p5_8_6 p5_9_6 p5_8_7 p5_9_7 p5_8_8 p5_9_8 p5_11_1 
+sort upm
+save `a', replace
+use "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado\basefinal_2.dta", replace
+sort upm
+merge upm using `a'
+tab _merge
+drop _merge
+
+**Modificar variables
+rename p4_5 conexion
+rename p4_7_4 con_otros
+rename p4_8 pq_disposicion
+rename p5_1 tv_paga
+rename p5_4 pq_tv_paga
+rename p5_5 tel_fijo
+rename p5_8_1 monto_tv_int_telm_telf
+rename p5_9_1 spago_tv_int_telm_telf
+rename p5_8_2 monto_tv_int_telf
+rename p5_9_2 spago_tv_int_telf
+rename p5_8_3 monto_tv_telf
+rename p5_9_3 spago_tv_telf
+rename p5_8_4 monto_tv_int
+rename p5_9_4 spago_tv_int
+rename p5_8_5 monto_telf_int
+rename p5_9_5 spago_telf_int
+rename p5_8_6 monto_tv
+rename p5_9_6 spago_tv
+rename p5_8_7 monto_telf
+rename p5_9_7 spago_telf
+rename p5_8_8 monto_int
+rename p5_9_8 spago_int
+rename p5_11_1 sat_int
+
+*/
+**Etiquetas y recodificaciones generales
+cd "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado"
+use basefinal_2.dta, clear
+
+**Revisamos y organizamos la base. Etiquetas y nombres de variables y recodificación.
+quiet {
+label variable sexo Sexo
+label variable paren "Parentesco con jefe de hogar"
+rename edad edad_cont
+label variable edad_cont "Edad continua"
+recode edad_cont (0/11=1) (12/15=2) (16/20=3) (21/25=4) (26/35=5) (36/99=6), gen(edad)
+label edad Edad
+label define edad 1 "0-11 años" 2 "12-15 años" 3 "16-20 años" 4 "21-25 años" 5 "26-35 años" 6 "+36 años"
+label values edad edad
+label variable asiste "Asiste a la escuela"
+label define sino 1 "Si" 0 "No"
+label values asiste sino
+label variable nivel "Nivel educativo"
+label variable ocupacion Ocupación
+label variable trabajo Trabaja
+label values trabajo sino
+label variable discapacidad "Condición de discapacidad"
+label values discapacidad sino
+label variable numhab "Número de habitantes en el hogar"
+label variable piso "Piso diferente de tierra"
+label values piso sino
+label variable agua "Servicio público de agua"
+label values agua sino
+label variable drenaje "Servicio público de drenaje"
+label values drenaje sino
+label variable luz "Servicio público de electricidad"
+label values luz sino
+label variable refri "Cuenta con refrigerador"
+label values refri sino
+label variable lavadora "Cuenta con lavadora"
+label values lavadora sino
+label variable auto "Cuenta con automóvil"
+label values auto sino
+label variable radio "Cuenta con radio"
+label values radio sino
+label variable tv "Cuenta con tv análoga, digital o plana"
+label values tv sino
+label variable compu "Cuenta con computadora fija o laptop"
+label values compu sino
+label variable internet "Cuenta con acceso a internet fijo o móvil doméstico"
+label values internet sino
+label variable celular "Cuenta con celular cualquier miembro"
+label values celular sino
+label variable videojuego "Cuenta con consola de videojeuegos"
+label values videojuego sino
+label variable tableta "Cuenta con tableta digital"
+label values tableta sino
+label variable con_celular "Se conecta a internet a través del celular"
+label values con_celular sino
+label variable con_modem "Se conecta a internet a través de módem móvil"
+label values con_modem sino
+label variable con_tableta "Se conecta a internet a través de tableta"
+label values con_tableta sino
+label variable estrato "Estrato socioeconomico construcción base original"
+label define estrato 1 "Bajo" 2 "Medio-bajo" 3 "Medio-alto" 4 "Alto"
+label values estrato estrato
+label variable viv_sel "Vivienda seleccionada"
+label variable tloc "Tamaño de localidad"
+label define tloc 1 "+100000" 2 "15000-99999" 3 "2500-14999" 4 "-2500"
+label values tloc tloc
+label variable ise "Índice Socioeconómico"
+label variable iat "Indíce de Acceso doméstico a la Tecnología Digital"
+rename fac_hog ponderador
+label variable ponderador Ponderador
+label variable conexion "Conexión fija/móvil"
+label define conexion 1 "Sólo fija" 2 "Sólo móvil" 3 "Ambas" 9 "No sabe/quiere contestar"
+label values conexion conexion
+label variable con_otros "Se conecta a internet a través de otros"
+recode con_otros (1=1) (.=0)
+label define con_otros 1 "Otros dispositivos" 0 "No"
+label values con_otros con_otros
+label variable pq_disposicion "¿Por qué no dispone de conexión"
+label define pq_disposicion 1 "Falta recursos" 2 "No interesa/necesita" 3 "No sabe usarlo" ///
+4 "No es útil" 5 "Equipo insuficiente" 6 "Sin infraestructura" 7 "Otro" 8 "No responde"
+label values pq_disposicion pq_disposicion 
+label variable tv_paga "Dispone de tv paga"
+label variable pq_tv_paga "¿Por qué no dispone de tv de paga?"
+label define pq_tv_paga 1 "Falta recursos" 2 "No interesa/necesita" 3 "Sin infraestructura" 4 "Otro"
+label values pq_tv_paga pq_tv_paga
+label variable tel_fijo "Dispone de teléfono fijo"
+label variable monto_tv_int_telm_telf "Monto de pago por tv paga, internet, teléfono móvil y teléfono fijo"
+label variable spago_tv_int_telm_telf "Recibe sin pago tv paga, internet, teléfono móvil y teléfono fijo"
+recode spago_tv_int_telm_telf (1=1) (.=0)
+label values spago_tv_int_telm_telf sino
+label variable monto_tv_int_telf "Monto de pago por tv paga, internet y teléfono fijo"
+label variable spago_tv_int_telf "Recibe sin pago tv paga, internet y teléfono fijo"
+recode spago_tv_int_telf (1=1) (.=0)
+label values spago_tv_int_telf sino
+label variable monto_tv_telf "Monto de pago por tv paga, teléfono fijo" 
+label variable spago_tv_telf "Recibe sin pago tv paga, internet y teléfono fijo"
+recode spago_tv_telf (1=1) (.=0)
+label values spago_tv_telf sino
+label variable monto_tv_int "Monto de pago por tv paga e internet"
+label variable spago_tv_int "Recibe sin pago tv paga e internet"
+recode spago_tv_int (1=1) (.=0)
+label values spago_tv_int sino
+label variable monto_telf_int "Monto de pago por teléfono fijo e internet"
+label variable spago_telf_int "Recibe sin pago teléfono fijo e internet"
+recode spago_telf_int (1=1) (.=0)
+label values spago_telf_int sino
+label variable monto_tv "Monto de pago por tv paga"
+label variable spago_tv "Recibe sin pago tv paga"
+recode spago_tv (1=1) (.=0)
+label values spago_tv sino
+label variable monto_telf "Monto de pago por teléfono fijo"
+label variable spago_telf "Recibe sin pago teléfono fijo"
+recode spago_telf (1=1) (.=0)
+label values spago_telf sino
+label variable monto_int "Monto de pago por teléfono fijo"
+label variable spago_int "Recibe sin pago teléfono fijo"
+recode spago_int (1=1) (.=0)
+label values spago_int sino
+label variable sat_int "Satisfacción con servicio de internet"
+label define sat_int 1 "Satisfecho" 2 "No satisfecho" 3 "No cuenta con internet" 8 "No sabe/quiso responder"
+label values sat_int sat_int
+label variable isedec "Deciles de ISE"
+label variable isequin "Quintiles de ISE"
+label define isequin 1 "Bajo" 2 "Medio/bajo" 3 "Medio" 4 "Medio/alto" 5 "Alto"
+label values isequin isequin
+label variable isecat "Terciles de ISE"
+label define isecat 1 "Bajo" 2 "Medio" 3 "Alto"
+label values isecat isecat
+label variable iseba "Niveles bajo-alto de ISE"
+label define iseba 1 "Bajo" 2 "Alto"
+label values iseba iseba
+label variable iatq "Cuartiles de IAT"
+label define iatq 1 "Bajo" 2 "Medio/bajo" 3 "Medio/alto" 4 "Alto"
+label values iatq iatq
+label variable iatquin "Quintiles de IAT"
+label define iatquin 1 "Bajo" 2 "Medio/bajo" 3 "Medio" 4 "Medio/alto" 5 "Alto" 
+label values iatquin iatquin
+label variable iatcat "Terciles de IAT"
+label define iatcat 1 "Bajo" 2 "Medio" 3 "Alto"
+label values iatcat iatcat
+label variable iatab "Niveles bajo-alto de IAT"
+label define iatab 1 "Bajo" 2 "Alto"
+}
+** Índice de Asequibilidad de Tecnología Digital Doméstica
+quiet summ monto*, detail
+
+** Algunas variables no tienen información, eliminamos
+quiet drop monto_tv_int_telm_telf 
+
+**Codificamos información de algunas variables
+replace monto_tv_int_telf=. if monto_tv_int_telf==9999
+replace monto_tv_telf=. if monto_tv_telf==9999
+replace monto_tv=. if monto_tv==9999
+replace monto_telf=. if monto_telf==9999
+replace monto_int=. if monto_int==9999
+replace monto_telf_int=. if monto_telf_int==9999
+
+**Reevaluamos variables
+quiet {
+summ monto*, detail
+pwcorr monto* if internet==1 [aw=ponderador]
+}
+**Nos quedamos con variables que contienen servicio de internet
+quiet {
+summ monto_tv_int_telf monto_int monto_telf_int
+pwcorr monto_tv_int_telf monto_int monto_telf_int
+}
+
+/**Más del 80% de los casos no contienen información sobre el monto que se paga por el servicio
+Una posible construcción podría ser imputar el monto en función de la información sobre 
+activos del hogar, condiciones de vivienda y escolaridad. Asumiendo los puntajes más bajos
+como poca asequibilidad, tanto para quienes no pagan por el servicio, como para quienes no
+tienen acceso*/
+
+**Monto de Televisión de paga, internet y teléfono
+*Asignación de valor 0 al promedio
+replace monto_tv_int_telf=631 if monto_tv_int_telf==0
+gen ln_montvinttelf=ln(monto_tv_int_telf)
+mi set mlong
+mi register imputed ln_montvinttelf
+mi impute regress ln_montvinttelf piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
+mi extract 1, clear
+gen mon1_imp=(monto_tv_int_telf==.)
+replace monto_tv_int_telf=exp(ln_montvinttelf) if mon1_imp==1
+
+**Monto de Internet
+*Asignación de valor 0 al promedio
+replace monto_int=270 if monto_int==0
+gen ln_monint=ln(monto_int)
+mi set mlong
+mi register imputed ln_monint
+mi impute regress ln_monint piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
+mi extract 1, clear
+gen mon2_imp=(monto_int==.)
+replace monto_int=exp(ln_monint) if mon2_imp==1
+
+**Monto de Teléfono e Internet
+*Asignación de valor 0 al promedio
+replace monto_telf_int=431 if monto_telf_int==0
+gen ln_montelfint=ln(monto_telf_int)
+mi set mlong
+mi register imputed ln_montelfint
+mi impute regress ln_montelfint piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
+mi extract 1, clear
+gen mon3_imp=(monto_telf_int==.)
+replace monto_telf_int=exp(ln_montelfint) if mon3_imp==1
+
+**Verificamos nuevamente variables
+summ monto_tv_int_telf monto_int monto_telf_int
+pwcorr monto_tv_int_telf monto_int monto_telf_int
+factor monto_tv_int_telf monto_int monto_telf_int
+predict f1
+gen iase=(f1*17.89)
+summ iase, detail
+
+**Discretizamos IASE
+*Deciles de IASE
+xtile iasedec=iase, nq(10)
+*Cuartiles de IASE
+xtile iasequar=iase, nq(4)
+*Quintiles de IASE
+xtile iasequin=iase, nq(5)
+*Bajo, medio, alto 
+xtile iasebma=iase, nq(3)
+*Alto, bajo
+xtile iaseba=iase, nq(2)
+
+**Creamos etiquetas de las nuevas variables
+label variable iase "Índice de Asequibilidad de Infraestructura Digital Doméstica"
+label variable iasedec "Deciles de IASE"
+label variable iasequar "Cuartiles de IASE"
+label define iasequar 1 "Bajo" 2 "Medio/bajo" 3 "Medio/Alto" 4 "Alto"
+label values iasequar iasequar 
+label variable iasequin "Quintiles de IASE"
+label define iasequin 1 "Bajo" 2 "Medio/bajo" 3 "Medio" 4 "Medio/alto" 5 "Alto"
+label values iasequin iasequin
+label variable iasebma "Terciles de IASE"
+label define iasebma 1 "Bajo" 2 "Medio" 3 "Alto"
+label values iasebma iasebma
+label variable iaseba "Nivel bajo-alto de ISE"
+label define iaseba 1 "Bajo" 2 "Alto"
+
+**Limpiamos variables que no utlizaremos
+drop ln_montvinttelf mon1_imp ln_monint mon2_imp ln_montelfint mon3_imp f1 viv_sel
+
+*----------------------------------------------------------------------------------
+
+**Construcción alternativa del IASE
+*Evaluamos con internet en algún servicio
+summ p5_8_1 p5_8_2 p5_8_4 p5_8_5 p5_8_8 if internet==1
+
+*Eliminamos primera variable, no tiene información
+summ p5_8_2 p5_8_4 p5_8_5 p5_8_8 if internet==1
+
+*Valor 9999 a perdidos
+replace p5_8_2=. if p5_8_2==9999 
+replace p5_8_4=. if p5_8_4==9999
+replace p5_8_5=. if p5_8_5==9999
+replace p5_8_8=. if p5_8_8==9999
+
+*Completamos con información de sólo internet sólo si tienen acceso a internet
+replace p5_8_2=p5_8_8 if internet==1
+replace p5_8_4=p5_8_8 if internet==1
+replace p5_8_5=p5_8_8 if internet==1
+
+*Completamos información de sólo internet con internet y teléfono
+replace p5_8_8=p5_8_5 if internet==1
+
+/**Asumimos valor 0 como el nivel más bajo que representa no asequibilidad,
+aquí entrarían técnicamente quienes no tienen acceso y quienes a pesar de tenerlo
+no pagan directamente por el servicio, es decir, en una coyuntura en la que les
+priven del servicio, no podrán pagarlo por sus propios medios. Recodificamos
+perdidos como 0 (nivel más bajo de asequibilidad)*/
+replace p5_8_2=0 if p5_8_2==.
+replace p5_8_4=0 if p5_8_4==.
+replace p5_8_5=0 if p5_8_5==.
+replace p5_8_8=0 if p5_8_8==.
+
+*Verificamos
+summ p5_8_2 p5_8_4 p5_8_5 p5_8_8, detail
+corr p5_8_2 p5_8_4 p5_8_5 p5_8_8
+
+*Generamos índice
+factor p5_8_2 p5_8_4 p5_8_5 p5_8_8 [aw=ponderador]
+predict f1
+gen iase_a=(f1)
+summ iase_a, detail
+xtile iase_ba=iase_a, nq(2)
+xtile iase_bma=iase_a, nq(3)
+drop f1
+
+*Comparamos las dos construcciones
+summ iase iase_a, detail
+/*Se considera que la iase_a es mejor construcción, a pesar de no tener variabilidad
+en los cuartiles 1, 2 y 3, coincide con la investigación internacional sobre el 
+porcentaje de accesibilidad a internet, y en este caso hace una distinción entre
+acceso público y doméstico*/
+
+*Etiquetamos
+rename p5_8_1 monto_tv_int_telm_telf_alt
+rename p5_8_2 monto_tv_int_telf_alt
+rename p5_8_4 monto_tv_int_alt
+rename p5_8_5 monto_telf_int_alt
+rename p5_8_8 monto_int_alt
+label variable iase_a "Índice de Asequibilidad de Infraestructura Digital Doméstica_alternativa"
+label variable iase_ba "Nivel bajo-alto de IASE_alternativa"
+label variable iase_bma "Terciles de IASE_alternativa"
+label variable monto_tv_int_telm_telf_alt "Monto de pago por tv, internet, teléfono móvil/fijo_alternativo"
+label variable monto_tv_int_telf_alt "Monto de pago por tv, internet y teléfono fijo_alternativo"
+label variable monto_tv_int_alt "Monto de pago por tv e internet_alternativo"
+label variable monto_telf_int_alt "Monto de pago por teléfono fijo e internet_alternativo"
+label variable monto_int_alt "Monto de pago por internet_alternativo"
+
+**Ordenamos base final
+order upm tloc sexo paren edad_cont edad asiste nivel ocupacion trabajo discapacidad numhab ///
+      piso agua drenaje luz refri lavadora auto radio tv compu internet celular ///
+	  videojuego tableta con_celular con_modem con_tableta conexion con_otros ///
+	  pq_disposicion tv_paga pq_tv_paga tel_fijo spago_tv_int_telm_telf ///
+	  monto_tv_int_telf spago_tv_int_telf monto_tv_telf spago_tv_telf monto_tv_int ///
+	  monto_telf_int monto_tv monto_telf monto_int monto_tv_int_telm_telf_alt ///
+	  monto_tv_int_telf_alt monto_tv_int_alt monto_telf_int_alt monto_int_alt ///
+	  spago_tv_int spago_telf_int spago_tv spago_telf spago_int sat_int estrato ise ///
+	  isedec isequin isecat iseba iat iatq iatquin iatcat iatab iase iasedec iasequar ///
+	  iasequin iasebma iaseba iase_a iase_ba iase_bma ponderador
+sort upm
+
+**Guardamos base final
+save "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado\basefinal_2.dta", replace
+
+******Fin del programa*******
+
