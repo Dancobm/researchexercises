@@ -600,10 +600,14 @@ drop f1
 
 *Comparamos las dos construcciones
 summ iase iase_a, detail
-/*Se considera que la iase_a es mejor construcción, a pesar de no tener variabilidad
-en los cuartiles 1, 2 y 3, coincide con la investigación internacional sobre el 
-porcentaje de accesibilidad a internet, y en este caso hace una distinción entre
-acceso público y doméstico*/
+/*Ventajas y desventajas de una y otra.
+Se considera que la iase_a es mejor construcción, a pesar de no tener variabilidad
+en los cuartiles 1, 2 y 3, su distribución básicamente es dicotómica,
+coincide con la investigación internacional sobre el porcentaje de accesibilidad
+a internet, y en este caso hace una distinción entre acceso público y doméstico.
+iase tiene una mayor variabilidad, no obstante la asequibilidad es grande para 
+grupos socioeconómicos más bajos, lo que puede leerse como sobreestimación dada
+la imputación de datos. Habrá que explorar otras construcciones. Seguimos pensando.*/
 
 *Etiquetamos
 rename p5_8_1 monto_tv_int_telm_telf_alt
