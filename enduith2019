@@ -1,13 +1,13 @@
-/**Ejercicio desigualdad en el acceso a la tecnología para clases en línea. COVID-19
-**Daniel Cobos
+/**Ejercicio desigualdad en el acceso a internet. Contexto COVID-19
+Daniel Cobos, colmex.**/
 
 **Directorios
 tempfile a
 **Bases creadas
-local datos "C:\Users\peacy\Desktop\endithu\Base de datos\creado"
-local temporal "C:\Users\peacy\Desktop\endithu\Base de datos\temporal"
+local datos "path"
+local temporal "path"
 **ENDITUH
-cd "C:\Users\peacy\Desktop\endithu\Base de datos\"
+cd "path"
 clear
 gen upm=.
 save `a', replace
@@ -57,7 +57,7 @@ replace prov_hogar=2 if p2_3>=2
 **Seleccionamos variables creadas y guardamos
 keep upm viv_sel piso agua drenaje luz refri lavadora auto numhab tloc estrato
 sort upm viv_sel
-save "`datos'/base_viv.dta", replace
+save "`datos'/base", replace
 
 ****Hogares
 clear
@@ -129,16 +129,16 @@ rename p4_7_3 con_tableta
 
 **Seleccionamos variables y guardamos
 keep upm viv_sel radio tv celular videojuego compu tableta internet con_celular con_modem con_tableta tloc
-save "`datos'/base_hog.dta", replace
+save "`datos'/base", replace
 sort upm viv_sel
 save `a', replace
-use "`datos'/base_viv.dta", replace
+use "`datos'/base", replace
 sort upm viv_sel
 merge upm viv_sel using `a'
 tab _merge
 drop _merge
 sort upm viv_sel
-save "`temporal'/basefinal.dta", replace
+save "`temporal'/base", replace
 
 ****Residentes
 clear
@@ -177,11 +177,6 @@ gen trabajo=.
 replace trabajo=1 if p3_10>=1 & p3_10 <=6
 replace trabajo=0 if p3_10==8
 
-**Discapacidad
-gen discapacidad=.
-replace discapacidad=1 if p3_10==7
-replace discapacidad=0 if p3_10!=7
-
 **Corregimos trabajo
 replace trabajo=1 if p3_11==1
 replace trabajo=1 if p3_11==2
@@ -201,10 +196,10 @@ label values ocupacion ocupacion
 
 **Guardamos y pegamos en base temporal
 keep upm viv_sel paren sexo edad asiste nivel trabajo discapacidad ocupacion estrato tloc
-save "`datos'/base_resi.dta", replace
+save "`datos'/base", replace
 sort upm viv_sel
 save `a', replace
-use "`temporal'/basefinal.dta", replace
+use "`temporal'/base.dta", replace
 sort upm viv_sel
 merge upm viv_sel using `a'
 tab _merge
@@ -215,9 +210,9 @@ order upm sexo paren edad asiste nivel ocupacion trabajo discapacidad numhab ///
 save "`temporal'/basefinal_1.dta", replace
 
 ****Generamos índices
-**Socioeconómico
-polychoricpca piso agua drenaje luz refri lavadora auto radio tv nivel, score(factor) nscore(2) 
-gen ise=(factor1*0.4088)+(factor2*0.1171)
+**Socioeconómico. Basado en Solís, 2015.
+polychoricpca piso agua drenaje luz refri lavadora auto radio tv nivel, score(variable) nscore(factores retenidos) 
+gen ise=variable+variable
 drop factor*
 summ ise, detail
 **Deciles
@@ -233,8 +228,8 @@ xtile iseba=ise, nq(2)
 save "`temporal'/basefinal_1.dta", replace
 
 ** Ìndice de Acceso Doméstico a Tecnología Digital de la Información (interfaces de conexión). 
-**A mayor puntaje, mayor infraestructura doméstica (interfaces de conexión)
-factor compu celular videojuego tableta
+**A mayor puntaje, mayor infraestructura doméstica (interfaces de conexión). Elaboración propia.
+factor compu celular videojuego tableta [aw=fac_hog]
 predict f1 
 gen iat=f1
 summ iat, detail
@@ -252,7 +247,7 @@ keep  upm sexo paren edad asiste nivel ocupacion trabajo discapacidad numhab ///
       piso agua drenaje luz refri lavadora auto radio tv compu internet celular ///
 	  videojuego tableta con_celular con_modem con_tableta estrato viv_sel tloc ///
 	  ise isedec isequin isecat iat iatq iatquin iatcat iseba iatab
-save "`datos'/basefinal_2.dta", replace
+save "`datos'/base.dta", replace
 
 **Pegamos ponderador
 use tic_2019_hogares.dta, clear
@@ -260,14 +255,14 @@ quiet destring, replace
 keep upm viv_sel fac_hog
 sort upm
 save `a', replace
-use "`datos'/basefinal_2.dta", replace
+use "`datos'/base.dta", replace
 sort upm
 merge upm using `a'
 tab _merge
 drop _merge
 
 **Guardamos base final
-save "`datos'/basefinal_2.dta", replace
+save "`datos'/base.dta", replace
 
 */
 ***
@@ -275,13 +270,13 @@ save "`datos'/basefinal_2.dta", replace
 **Adiciones para construir índice de calidad, y de asequibilidad. Recuperamos algunas variables
 tempfile a
 **Tipo de conexión fija o móvil de internet y costo 
-use "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\tic_2019_hogares.dta", clear
+use "path", clear
 quiet destring, replace
 keep upm p4_5 p4_7_4 p4_8 p5_1 p5_4 p5_5 p5_8_1 p5_9_1 p5_8_2 p5_9_2 p5_8_3 p5_9_3 p5_8_4 ///
 p5_9_4 p5_8_5 p5_9_5 p5_8_6 p5_9_6 p5_8_7 p5_9_7 p5_8_8 p5_9_8 p5_11_1 
 sort upm
 save `a', replace
-use "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado\basefinal_2.dta", replace
+use "path", replace
 sort upm
 merge upm using `a'
 tab _merge
@@ -523,8 +518,8 @@ replace monto_telf_int=exp(ln_montelfint) if mon3_imp==1
 summ monto_tv_int_telf monto_int monto_telf_int
 pwcorr monto_tv_int_telf monto_int monto_telf_int
 factor monto_tv_int_telf monto_int monto_telf_int
-predict f1
-gen iase=(f1*17.89)
+predict variable
+gen iase=variable
 summ iase, detail
 
 **Discretizamos IASE
@@ -559,7 +554,7 @@ drop ln_montvinttelf mon1_imp ln_monint mon2_imp ln_montelfint mon3_imp f1 viv_s
 
 *----------------------------------------------------------------------------------
 
-**Construcción alternativa del IASE
+**Construcción alternativa del IASE. Elaboración propia.
 *Evaluamos con internet en algún servicio
 summ p5_8_1 p5_8_2 p5_8_4 p5_8_5 p5_8_8 if internet==1
 
@@ -596,8 +591,8 @@ corr p5_8_2 p5_8_4 p5_8_5 p5_8_8
 
 *Generamos índice
 factor p5_8_2 p5_8_4 p5_8_5 p5_8_8 [aw=ponderador]
-predict f1
-gen iase_a=(f1)
+predict funa variable
+gen iase_a=con una variable
 summ iase_a, detail
 xtile iase_ba=iase_a, nq(2)
 xtile iase_bma=iase_a, nq(3)
@@ -639,7 +634,7 @@ order upm tloc sexo paren edad_cont edad asiste nivel ocupacion trabajo discapac
 sort upm
 
 **Guardamos base final
-save "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado\basefinal_2.dta", replace
+save "path", replace
 
 ******Fin del programa*******
 
