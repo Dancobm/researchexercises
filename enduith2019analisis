@@ -40,7 +40,8 @@ count
 count if asiste==1
 *19,305 casos que asisten a la escuela, todos los niveles
 
-*Discretizamos Índice Socioeconómico
+*Discretizamos Índice Socioeconómico (basado en Solís[2015], url:
+*https://ceey.org.mx/wp-content/uploads/2018/06/04-Sol%C3%ADs-2015-1.pdf)
 xtile isequar=ise, nq(4)
 label variable isequar "Cuartiles de ISE"
 label define isequar 1 "Bajo" 2 "Medio/bajo" 3 "Medio/alto" 4 "Alto"
