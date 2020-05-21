@@ -1,18 +1,18 @@
 /**Análisis de datos sobre la disponibilidad de infraestructura
-doméstica para el acceso a internet en tiempos del Covid-19
-Análisis específico para estudiantes.
+doméstica para el acceso a internet en el marco de la contingencia sanitaria 2020
+Análisis para estudiantes.
 
-Construcción de variables disponible en Github
+Construcción de variables disponible en: https://github.com/Dancobm/researchexercises/blob/master/enduith2019 
 Fuente de datos: Encuesta Nacional sobre Disponibilidad y Uso de Tecnologías
 				 de la Información en los Hogares
 				 https://www.inegi.org.mx/programas/dutih/2019/
-Construcción de los datos en Github, url: 
-Autor: Daniel Omar Cobos Marín
+				 
+Autor de este análisis: Daniel Omar Cobos Marín. Contacto: dcobos@colmex.mx
 **/
 
 **Directorio
-cd "P:\Doctorado\Redacción\2020\Nota acceso a tecnología\endithu\Base de datos\creado"
-use basefinal_2.dta, clear
+cd "directorio"
+use base.dta, clear
 
 **Recodificación de variables en función de las necesidades del análisis
 *Edad, discretizamos y agrupamos valores de variable
@@ -32,7 +32,7 @@ label define numhab 1 "1-3 hab." 2 "4-6 hab." 3 "7-9 hab." 4 "+10 hab"
 label values numhab numhab
 order upm tloc sexo paren edad_cont edad asiste nivel ocupacion trabajo discapacidad numhab_cont numhab
 
-*Discapacidad a partir de trabajo
+*Discapacidad a partir de trabajo. (no utilizaremos para este análisis, variable endógena en los modelos)
 replace trabajo=2 if discapacidad==1
 label define trabajo 0 "No" 1 "Si" 2 "Discapacidad" 
 label values trabajo trabajo
@@ -142,11 +142,11 @@ tecnico superior |      2.65      16.85      36.35      44.16 |    100.00
 
 */
 
-**Nuestra construcción de índice socioeconómico parece más consistente
+**Nuestra construcción de índice socioeconómico parece más consistente en nuestra opinión
 
 /**Estimación de probabilidades bajo un modelo estadístico.
 Elegimos un modelo loglineal para controlar variables sociodemográficas
-y de disponibilidad de infraestructura. Variable dependiente es acceso a internet.
+y de disponibilidad de infraestructura. Variable dependiente es 1=tiene acceso a internet, 0=no tiene acceso.
 La variable dependiente considera únicamente si el acceso se da dentro del hogar
 ya sea fijo o móvil
 **/
@@ -162,7 +162,7 @@ quiet logit internet ib3.isecat i.iatcat i.sexo i.edad i.numhab i0.trabajo i.tlo
 listcoef
 estimates store modelo2
 lrtest modelo1
-a
+
 *Modelo 3
 logit internet ib3.isecat i.iatcat iase_a i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
 listcoef
@@ -201,7 +201,7 @@ margins iatcat, atmeans
 ------------------------------------------------------------------------------*/
 
 *Probabildiades estimadas del IASE, manteniendo todas las variables en el nivel promedio
-margins, atmeans at((p10)iase_a) at((p75)iase_a) at((p90)iase_a)  at((p95)iase_a)
+margins iasebma, atmeans
 
 /*------------------------------------------------------------------------------
              |            Delta-method
@@ -237,7 +237,6 @@ margins edad, atmeans
  16-20 años  |   .8090319   .0001937  4177.21   0.000     .8086523    .8094115
  21-25 años  |   .8222516    .000318  2585.64   0.000     .8216283    .8228748
  26-35 años  |   .7663894   .0005603  1367.80   0.000     .7652912    .7674876
-   +36 años  |   .8043067   .0005389  1492.40   0.000     .8032504    .8053629
 ------------------------------------------------------------------------------*/
 
 *Probabilidades estimadas del número de habitantes, manteniendo todas las variables en su nivel promedio
@@ -271,38 +270,17 @@ Discapacidad  |   .7840535   .0001327  5906.43   0.000     .7837934    .7843137
 *Probabilidades estimadas de tamaño de localidad, manteniendo todas las variables en su nivel promedio
 margins tloc, atmeans
 
+/*------------------------------------------------------------------------------
+             |            Delta-method
+             |     Margin   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        tloc |
+    +100000  |    .866782    .000128  6773.55   0.000     .8665312    .8670328
+15000-99999  |   .7614836   .0002851  2670.49   0.000     .7609247    .7620424
+ 2500-14999  |   .7052238   .0003344  2108.99   0.000     .7045684    .7058792
+      -2500  |   .5301503   .0003444  1539.26   0.000     .5294752    .5308253
+------------------------------------------------------------------------------*/
 
+****Fin del programa****
 
-
-
-a
-
-logit internet ib3.isecat ib3.iatcat iase_a i.sexo i.edad i.numhab i0.trabajo i.tloc [fw=ponderador], or
-margins, atmeans at((p10)iase_a) at((p75)iase_a) at((p90)iase_a)  at((p95)iase_a)
-
-
-
-
-logit internet ib3.isecat ib3.iatcat ib2.iase_ba i.sexo edad_cont i.numhab i0.trabajo i.tloc  [fw=ponderador], or
-margins, atmeans at(edad_cont=(6 12 15 18 21 25 35 40 45 50 60 70 80))
-
-/*Con otro índice de asequibilidad*/
-
-logit internet ib3.isecat i.iatcat inter i.sexo i.edad i.numhab i0.trabajo i.tloc if asiste==1 [fw=ponderador], or
-
-
-
-
-
-* atmeans at((p10)ise) at((p25)ise) at((p50)ise) at((p75)ise) at((p90)ise)
-margins isequar, atmeans
-*Probabilidades estimadas del índice de acceso dóméstico tecnológico, promedio a diferentes niveles
-margins, atmeans at((p50)iat) at((p75)iat) at((p90)iat)
-margins, atmeans at((p10)iat) at((p75)iat) at((p90)iat)
-*Probabilidades estimadas del número de habitantes en niveles extremos promedio (NO es medida de hacinamiento)
-margins, atmeans at((p10)numhab) at ((p90)numhab)
-*Probabilidades estimadas manteniendo las variables en su nivel promedio
-margins ocupacion, atmeans
-margins tloc, atmeans
-margins sexo, atmeans
-
+Contacto: dcobos@colmex.mx
