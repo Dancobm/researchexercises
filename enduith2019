@@ -211,36 +211,14 @@ save "`temporal'/basefinal_1.dta", replace
 
 ****Generamos índices
 **Socioeconómico. Basado en Solís, 2015.
-polychoricpca piso agua drenaje luz refri lavadora auto radio tv nivel, score(variable) nscore(factores retenidos) 
-gen ise=variable+variable
-drop factor*
-summ ise, detail
-**Deciles
-xtile isedec=ise, nq(10)
-**Quintiles
-xtile isequin=ise, nq(5)
-**Alto, medio y bajo
-xtile isecat=ise, nq(3)
-**Alto-bajo
-xtile iseba=ise, nq(2)
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 **Guardamos
 save "`temporal'/basefinal_1.dta", replace
 
 ** Ìndice de Acceso Doméstico a Tecnología Digital de la Información (interfaces de conexión). 
 **A mayor puntaje, mayor infraestructura doméstica (interfaces de conexión). Elaboración propia.
-factor compu celular videojuego tableta [aw=fac_hog]
-predict f1 
-gen iat=f1
-summ iat, detail
-**Deciles
-xtile iatq=iat, nq(4)
-**Quintiles
-xtile iatquin=iat, nq(5)
-*Alto, medio, bajo
-xtile iatcat=iat, nq(3)
-*Alto-bajo
-xtile iatab=iat, nq(2)
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 **Guardamos base
 keep  upm sexo paren edad asiste nivel ocupacion trabajo discapacidad numhab ///
@@ -483,42 +461,20 @@ tienen acceso*/
 
 **Monto de Televisión de paga, internet y teléfono
 *Asignación de valor 0 al promedio
-replace monto_tv_int_telf=631 if monto_tv_int_telf==0
-gen ln_montvinttelf=ln(monto_tv_int_telf)
-mi set mlong
-mi register imputed ln_montvinttelf
-mi impute regress ln_montvinttelf piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
-mi extract 1, clear
-gen mon1_imp=(monto_tv_int_telf==.)
-replace monto_tv_int_telf=exp(ln_montvinttelf) if mon1_imp==1
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 **Monto de Internet
 *Asignación de valor 0 al promedio
-replace monto_int=270 if monto_int==0
-gen ln_monint=ln(monto_int)
-mi set mlong
-mi register imputed ln_monint
-mi impute regress ln_monint piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
-mi extract 1, clear
-gen mon2_imp=(monto_int==.)
-replace monto_int=exp(ln_monint) if mon2_imp==1
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 **Monto de Teléfono e Internet
 *Asignación de valor 0 al promedio
-replace monto_telf_int=431 if monto_telf_int==0
-gen ln_montelfint=ln(monto_telf_int)
-mi set mlong
-mi register imputed ln_montelfint
-mi impute regress ln_montelfint piso agua drenaje luz refri lavadora auto radio tv i.nivel, add(1) force
-mi extract 1, clear
-gen mon3_imp=(monto_telf_int==.)
-replace monto_telf_int=exp(ln_montelfint) if mon3_imp==1
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 **Verificamos nuevamente variables
 summ monto_tv_int_telf monto_int monto_telf_int
 pwcorr monto_tv_int_telf monto_int monto_telf_int
-factor monto_tv_int_telf monto_int monto_telf_int
-predict variable
+**Para la construcción del índice contactar: dcobos@colmex.mx
 gen iase=variable
 summ iase, detail
 
@@ -590,13 +546,7 @@ summ p5_8_2 p5_8_4 p5_8_5 p5_8_8, detail
 corr p5_8_2 p5_8_4 p5_8_5 p5_8_8
 
 *Generamos índice
-factor p5_8_2 p5_8_4 p5_8_5 p5_8_8 [aw=ponderador]
-predict funa variable
-gen iase_a=con una variable
-summ iase_a, detail
-xtile iase_ba=iase_a, nq(2)
-xtile iase_bma=iase_a, nq(3)
-drop f1
+**Para la construcción del índice contactar: dcobos@colmex.mx
 
 *Comparamos las dos construcciones
 summ iase iase_a, detail
@@ -638,7 +588,7 @@ order upm tloc sexo paren edad_cont edad asiste nivel ocupacion trabajo discapac
 sort upm
 
 **Guardamos base final
-save "path", replace
+save "base", replace
 
 ******Fin del programa*******
 
